@@ -7,21 +7,39 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
 	"github.com/pelletier/go-toml"
+	"github.com/sirupsen/logrus"
 	"gopkg.in/yaml.v2"
 )
 
-// Logger 日志记录器
-var Logger = log.New(os.Stdout, "[config] ", log.LstdFlags)
+// watchConfigs 已加载的配置文件，当接收到 HUP 进程信号会重载
+var watchConfigs = make(map[string]interface{})
+
+// init 启动一个协程监视进程信号(kill -HUP)，如果收到则执行 Load()
+func init() {
+	go func() {
+		HUP := make(chan os.Signal)
+		for {
+			signal.Notify(HUP, syscall.SIGHUP)
+			<-HUP
+
+			logrus.Info("获取一个 HUP 进程信号，开始重新加载配置文件...")
+			for k, v := range watchConfigs {
+				c := NewConfigurator(k, v)
+				if err := c.Load(); err != nil {
+					logrus.WithField("filename", c.Filename).WithError(err).Error("重载配置文件")
+				}
+			}
+		}
+	}()
+}
 
 type configurator struct {
 	// Filename 配置文件名
@@ -32,9 +50,6 @@ type configurator struct {
 
 	// fileType 配置文件类型，从文件扩展名中获取。可选 .json, .yaml, .toml
 	fileType string
-
-	// sigWatcher 进程信号监视器。防止一个文件启动多个监视器
-	once sync.Once
 }
 
 // NewConfigurator 创建一个配置器
@@ -46,15 +61,15 @@ func NewConfigurator(filename string, targetObj interface{}) *configurator {
 	}
 }
 
-// Load 从指定文件中加载配置，会开启一个协程监视文件，如果发生修改则重新加载
+// Load 从指定文件中加载配置
 func (c *configurator) Load() error {
 	data, err := ioutil.ReadFile(c.Filename)
 	if err != nil {
 		return fmt.Errorf("读 %q 配置文件: [%w]", c.Filename, err)
 	}
 
-	// 监视进程信号
-	c.once.Do(func() { go c.watchSig() })
+	// 添加到监视 hashMap 中
+	watchConfigs[c.Filename] = c.TargetObj
 
 	switch typ := strings.ToLower(c.fileType); typ {
 	case ".yaml":
@@ -121,31 +136,17 @@ func (c *configurator) Watching() {
 		for range time.Tick(10 * time.Second) {
 			fInfo, err := os.Stat(c.Filename)
 			if err != nil {
-				Logger.Println(fmt.Errorf("获取 %q 文件信息: [%w]", c.Filename, err))
+				logrus.WithField("filename", c.Filename).WithError(err).Error("获取文件信息")
 			}
 			newModTime := fInfo.ModTime()
 
 			if !lastModTime.IsZero() && lastModTime != newModTime {
 				if err := c.Load(); err != nil {
-					Logger.Println(fmt.Errorf("不能重新加载 %q 配置文件: [%w]", c.Filename, err))
+					logrus.WithField("filename", c.Filename).WithError(err).Error("重载配置文件")
 				}
 			}
 
 			lastModTime = newModTime
 		}
 	}()
-}
-
-// watchSig 监视进程信号(kill -HUP)，如果收到则执行 Load()
-func (c *configurator) watchSig() {
-	HUP := make(chan os.Signal)
-	for {
-		signal.Notify(HUP, syscall.SIGHUP)
-		<-HUP
-		Logger.Printf("获取一个 HUP 进程信号，开始重新加载 %q 文件", c.Filename)
-
-		if err := c.Load(); err != nil {
-			Logger.Println(fmt.Errorf("不能重新加载 %q 配置文件: [%w]", c.Filename, err))
-		}
-	}
 }
