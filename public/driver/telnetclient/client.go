@@ -67,19 +67,19 @@ func (c *telnetClient) SetSessionWriter(w io.WriteCloser) {
 }
 
 // SetPrompt allows you to change prompt without re-creating ssh client. Default is `(?msi:[\$%#>]$)`
-func (c *telnetClient) SetPromptRe(pattern string) (err error) {
+func (c *telnetClient) SetPromptExpr(pattern string) (err error) {
 	c.promptRe, err = regexp.Compile(pattern)
 	return err
 }
 
 // SetLoginPrompt sets custom login prompt. Default is `[Uu]ser(\s)?[Nn]ame\:(\s+)?$`
-func (c *telnetClient) SetLoginPromptRe(pattern string) (err error) {
+func (c *telnetClient) SetLoginPromptExpr(pattern string) (err error) {
 	c.loginPromptRe, err = regexp.Compile(pattern)
 	return err
 }
 
 // SetPasswordPrompt sets custom password prompt. Default is `[Pp]ass[Ww]ord\:$`
-func (c *telnetClient) SetPasswordPromptRe(pattern string) (err error) {
+func (c *telnetClient) SetPasswordPromptExpr(pattern string) (err error) {
 	c.passwordPromptRe, err = regexp.Compile(pattern)
 	return err
 }
@@ -87,7 +87,7 @@ func (c *telnetClient) SetPasswordPromptRe(pattern string) (err error) {
 // Close closes telnet connection.
 func (c *telnetClient) Close() (err error) {
 	if c.conn != nil {
-		if _, err := c.readUntilRe(nil); err != nil {
+		if _, err := c.ReadAll(); err != nil {
 			return err
 		}
 

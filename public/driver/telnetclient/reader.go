@@ -19,6 +19,11 @@ func (c *telnetClient) ReadUntil(waitfor string) (s string, err error) {
 	return c.readUntilRe(waitForRe)
 }
 
+// ReadAll read all from tcp stream
+func (c *telnetClient) ReadAll() (s string, err error) {
+	return c.readUntilRe(nil)
+}
+
 // ReadUntilRe reads tcp stream from server until 'waitForRe' regex.Regexp
 // if waitForRe is nil, read all from tcp stream
 // Returns gathered output and error, if any.
