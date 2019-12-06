@@ -47,7 +47,7 @@ func New(host, username, password string) *telnetClient {
 		promptRe:         regexp.MustCompile(`(?msi:[\$%#>]$)`),
 		loginPromptRe:    regexp.MustCompile(`[Uu]ser(\s)?[Nn]ame\:(\s+)?$`),
 		passwordPromptRe: regexp.MustCompile(`[Pp]ass[Ww]ord\:$`),
-		callbacks:        nil,
+		callbacks:        make([]callbackPattern, 0, 5),
 	}
 	return c
 }

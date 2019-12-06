@@ -5,8 +5,8 @@ import (
 	"net"
 )
 
-// DialAndLogin Open tcp connection and login
-func (c *telnetClient) DialAndLogin() (err error) {
+// OpenAndLogin Open tcp connection and login
+func (c *telnetClient) Open() (err error) {
 	addr := fmt.Sprintf("%s:%d", c.Host, c.Port)
 	c.conn, err = net.DialTimeout("tcp", addr, c.Timeout)
 	if err != nil {
@@ -18,11 +18,11 @@ func (c *telnetClient) DialAndLogin() (err error) {
 		return err
 	}
 
-	return c.login()
+	return nil
 }
 
 // Login is a simple wrapper for login/password auth
-func (c *telnetClient) login() (err error) {
+func (c *telnetClient) Login() (err error) {
 	if c.Username != "" {
 		if _, err := c.readUntilRe(c.loginPromptRe); err != nil {
 			return err

@@ -188,5 +188,7 @@ func (c *telnetClient) readByte() (b byte, err error) {
 	}
 	data := make([]byte, 1, 1)
 	_, err = c.conn.Read(data)
+
+
 	return data[0], err
 }

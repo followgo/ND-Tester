@@ -32,10 +32,13 @@ func main() {
 		log.Fatalln(err)
 	}
 	// 连接并登陆
-	if err := c.DialAndLogin(); err != nil {
+	if err := c.Open(); err != nil {
 		log.Fatalln(err)
 	}
 	defer c.Close()
+	if err := c.Login(); err != nil {
+		log.Fatalln(err)
+	}
 
 	// 输入命令，并打印回显
 	s, err := c.Cmd("display version")
