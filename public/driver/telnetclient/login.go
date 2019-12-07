@@ -3,10 +3,11 @@ package telnetclient
 import (
 	"fmt"
 	"net"
+	"time"
 )
 
 // OpenAndLogin Open tcp connection and login
-func (c *telnetClient) Open() (err error) {
+func (c *telnetClient) OpenAndLogin() (err error) {
 	addr := fmt.Sprintf("%s:%d", c.Host, c.Port)
 	c.conn, err = net.DialTimeout("tcp", addr, c.Timeout)
 	if err != nil {
@@ -18,7 +19,7 @@ func (c *telnetClient) Open() (err error) {
 		return err
 	}
 
-	return nil
+	return c.Login()
 }
 
 // Login is a simple wrapper for login/password auth
