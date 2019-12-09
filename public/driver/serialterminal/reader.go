@@ -33,8 +33,9 @@ func (st *serialTerminal) ReadUntil(waitfor string) (s string, err error) {
 // Any escape sequences are cutted out during reading for providing clean output for parsing/reading.
 func (st *serialTerminal) readUntilRe(waitForRe *regexp.Regexp) (s string, err error) {
 	var (
-		buf      bytes.Buffer
-		lastLine bytes.Buffer
+		buf        bytes.Buffer
+		lastLine   bytes.Buffer
+		inSequence bool
 	)
 
 	// 函数返回的操作
@@ -69,7 +70,22 @@ func (st *serialTerminal) readUntilRe(waitForRe *regexp.Regexp) (s string, err e
 				return returnFn(err)
 			}
 
-			if b == '\r' {
+			// 忽略掉 FirstMile 交换机翻页后出现的长空白
+			if b == 0x0 {
+				inSequence = true
+				continue
+			}
+			if inSequence == true {
+				switch b {
+				case 0xd, 0x20:
+					continue
+				default:
+					inSequence = false
+					lastLine.Reset()
+				}
+			}
+
+			if b == '\r' || b == 0x1b {
 				continue
 			}
 
