@@ -2,18 +2,17 @@ package serialterminal
 
 import (
 	"bytes"
-	"errors"
-	"fmt"
 	"regexp"
 	"strings"
 	"time"
 
-	"github.com/goburrow/serial"
+	"github.com/followgo/ND-Tester/public/errors"
 )
 
 // ReadAll read all from tcp stream
 func (st *serialTerminal) ReadAll() (s string, err error) {
-	return st.readUntilRe(nil)
+	s, err = st.readUntilRe(nil)
+	return s, errors.Wrap(err, "读取所有数据")
 }
 
 // ReadUntil reads tcp stream from server until 'waitfor' regex matches.
@@ -22,9 +21,10 @@ func (st *serialTerminal) ReadAll() (s string, err error) {
 func (st *serialTerminal) ReadUntil(waitfor string) (s string, err error) {
 	waitForRe, err := regexp.Compile(waitfor)
 	if err != nil {
-		return "", fmt.Errorf("cannot compile 'waitfor' regexp: [%w]", err)
+		return "", errors.Wrapf(err, "编译 %q", waitfor)
 	}
-	return st.readUntilRe(waitForRe)
+	s, err = st.readUntilRe(waitForRe)
+	return s, errors.Wrapf(err, "读取直到匹配 %q", waitfor)
 }
 
 // ReadUntilRe reads tcp stream from server until 'waitForRe' regex.Regexp
@@ -38,12 +38,8 @@ func (st *serialTerminal) readUntilRe(waitForRe *regexp.Regexp) (s string, err e
 		inSequence bool
 	)
 
-	// 函数返回的操作
+	// 读取完成后的操作
 	var returnFn = func(err error) (string, error) {
-		if waitForRe == nil && err == ErrReadTimeout { // no timeout if read all
-			err = nil
-		}
-
 		buf.Write(lastLine.Bytes())
 		s := buf.String()
 
@@ -51,7 +47,7 @@ func (st *serialTerminal) readUntilRe(waitForRe *regexp.Regexp) (s string, err e
 			_, _ = st.sessionWriter.Write([]byte(s))
 		}
 
-		return s, err
+		return s, errors.Wrapf(err, "读取直到匹配 %q 表达式", waitForRe.String())
 	}
 
 	timeout := st.Timeout
@@ -63,7 +59,7 @@ func (st *serialTerminal) readUntilRe(waitForRe *regexp.Regexp) (s string, err e
 	for {
 		select {
 		case <-after:
-			return returnFn(ErrReadTimeout)
+			return returnFn(nil)
 		default:
 			b, err := st.readByte()
 			if err != nil {
@@ -129,9 +125,5 @@ func (st *serialTerminal) readUntilRe(waitForRe *regexp.Regexp) (s string, err e
 func (st *serialTerminal) readByte() (b byte, err error) {
 	data := make([]byte, 1, 1)
 	_, err = st.p.Read(data)
-	if errors.As(err, &serial.ErrTimeout) {
-		return 0, ErrReadTimeout
-	}
-
-	return data[0], err
+	return data[0], errors.Wrap(err, "读取一个字节")
 }
