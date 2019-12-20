@@ -3,7 +3,6 @@ package telnetclient
 import (
 	"fmt"
 	"net"
-	"time"
 )
 
 // OpenAndLogin Open tcp connection and login
@@ -19,11 +18,11 @@ func (c *telnetClient) OpenAndLogin() (err error) {
 		return err
 	}
 
-	return c.Login()
+	return c.login()
 }
 
 // Login is a simple wrapper for login/password auth
-func (c *telnetClient) Login() (err error) {
+func (c *telnetClient) login() (err error) {
 	if c.Username != "" {
 		if _, err := c.readUntilRe(c.loginPromptRe); err != nil {
 			return err

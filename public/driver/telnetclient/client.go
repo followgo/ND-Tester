@@ -17,11 +17,13 @@ type callbackPattern struct {
 
 // telnetClient Telnet 客户端数据结构
 type telnetClient struct {
-	Host     string
-	Port     uint16
-	Username string
-	Password string
-	Timeout  time.Duration
+	Host        string
+	Port        uint16
+	Username    string
+	Password    string
+	Timeout     time.Duration
+	LineBreaks  []byte
+	ByeCommands []string // 关闭连接前执行的命令
 
 	// 命令行提示符
 	promptRe         *regexp.Regexp
@@ -37,11 +39,12 @@ type telnetClient struct {
 // New 创建一个 telnetClient 实例
 func New(host, username, password string) *telnetClient {
 	c := &telnetClient{
-		Host:     host,
-		Port:     23,
-		Username: username,
-		Password: password,
-		Timeout:  5 * time.Second,
+		Host:       host,
+		Port:       23,
+		Username:   username,
+		Password:   password,
+		Timeout:    5 * time.Second,
+		LineBreaks: []byte{'\n'},
 
 		promptRe:         regexp.MustCompile(`(?msi:[\$%#>]$)`),
 		loginPromptRe:    regexp.MustCompile(`[Uu]ser(\s)?[Nn]ame\:(\s+)?$`),
@@ -84,20 +87,21 @@ func (c *telnetClient) SetPasswordPromptExpr(pattern string) (err error) {
 }
 
 // Close closes telnet connection.
-func (c *telnetClient) Close() (err error) {
+func (c *telnetClient) Close()  {
 	if c.conn != nil {
-		if _, err := c.ReadAll(); err != nil {
-			return err
+		for _, byeCmd := range c.ByeCommands {
+			_ = c.Write([]byte( byeCmd))
 		}
 
-		if c.sessionWriter != nil {
-			_ = c.sessionWriter.Close()
-		}
-
-		return c.conn.Close()
+		_, _ = c.ReadAll()
+		_ = c.conn.Close()
 	}
 
-	return nil
+	if c.sessionWriter != nil {
+		_ = c.sessionWriter.Close()
+	}
+
+	return
 }
 
 // RegisterTurnPageCallback registers new callback based on regex string. When current output string matches given

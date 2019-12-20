@@ -17,6 +17,9 @@ import (
 func main() {
 	// SC3700 只有密码，没有用户名
 	c := telnetclient.New("192.168.118.1", "", "firstmile")
+	c.LineBreaks = []byte{'\r', '\n'}
+	c.ByeCommands = []string{"quit"}
+
 	// 设置提示符: <SC3700>, [SC3700]
 	if err := c.SetPromptExpr(`(?msi:[\]>]$)`); err != nil {
 		log.Fatalln(err)
@@ -32,13 +35,10 @@ func main() {
 		log.Fatalln(err)
 	}
 	// 连接并登陆
-	if err := c.Open(); err != nil {
+	if err := c.OpenAndLogin(); err != nil {
 		log.Fatalln(err)
 	}
 	defer c.Close()
-	if err := c.Login(); err != nil {
-		log.Fatalln(err)
-	}
 
 	// 输入命令，并打印回显
 	s, err := c.Cmd("display version")

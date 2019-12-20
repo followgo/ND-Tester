@@ -3,6 +3,7 @@ package telnetclient
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"regexp"
 	"strings"
 	"time"
@@ -37,6 +38,9 @@ func (c *telnetClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err erro
 
 	// 函数返回的操作
 	var returnFn = func(err error) (string, error) {
+		if err == io.EOF {
+			err = nil
+		}
 		if waitForRe == nil && err == ErrReadTimeout { // no timeout if read all
 			err = nil
 		}
@@ -188,7 +192,6 @@ func (c *telnetClient) readByte() (b byte, err error) {
 	}
 	data := make([]byte, 1, 1)
 	_, err = c.conn.Read(data)
-
 
 	return data[0], err
 }

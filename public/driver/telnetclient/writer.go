@@ -16,7 +16,7 @@ func (c *telnetClient) Cmd(cmd string) (s string, err error) {
 
 // Write is the same as WriteRaw, but adds CRLF to given string
 func (c *telnetClient) Write(bytes []byte) error {
-	bytes = append(bytes, '\r', '\n')
+	bytes = append(bytes, c.LineBreaks...)
 	return c.WriteRaw(bytes)
 }
 
