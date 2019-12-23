@@ -1,5 +1,9 @@
 package telnetclient
 
+import (
+	"github.com/followgo/ND-Tester/public/errors"
+)
+
 // negotiate 协商
 // ignore: TELNET_AYT, TELNET_AO
 func (c *telnetClient) negotiate(sequence []byte) (err error) {
@@ -16,9 +20,9 @@ func (c *telnetClient) negotiate(sequence []byte) (err error) {
 		case cmdWILL:
 			err = c.WriteRaw([]byte{cmdIAC, cmdDO, sequence[2]})
 		}
-	}
-	if err != nil {
-		return err
+		if err != nil {
+			return errors.Wrapf(err, "answer to the %x command", sequence[1])
+		}
 	}
 
 	// subSeq SEND request
@@ -42,6 +46,11 @@ func (c *telnetClient) negotiate(sequence []byte) (err error) {
 			err = c.WriteRaw([]byte{cmdIAC, cmdSB, sequence[2], 0, cmdIAC, cmdSE})
 			break
 		}
+
+		if err != nil {
+			return errors.Wrapf(err, "answer to the %x sub command", sequence[2])
+		}
 	}
-	return err
+
+	return nil
 }

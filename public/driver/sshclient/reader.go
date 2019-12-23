@@ -2,12 +2,13 @@ package sshclient
 
 import (
 	"bytes"
-	"fmt"
+	"io"
 	"regexp"
 	"strings"
 	"time"
-)
 
+	"github.com/followgo/ND-Tester/public/errors"
+)
 
 // ReadAll read all from tcp stream
 func (sc *sshClient) ReadAll() (s string, err error) {
@@ -20,7 +21,7 @@ func (sc *sshClient) ReadAll() (s string, err error) {
 func (sc *sshClient) ReadUntil(waitfor string) (s string, err error) {
 	waitForRe, err := regexp.Compile(waitfor)
 	if err != nil {
-		return "", fmt.Errorf("cannot compile 'waitfor' regexp: [%w]", err)
+		return "", errors.Wrapf(err, "compile the %q regular expression", waitfor)
 	}
 	return sc.readUntilRe(waitForRe)
 }
@@ -29,6 +30,7 @@ func (sc *sshClient) ReadUntil(waitfor string) (s string, err error) {
 // if waitForRe is nil, read all from tcp stream
 // Returns gathered output and error, if any.
 // Any escape sequences are cutted out during reading for providing clean output for parsing/reading.
+// TODO: 首迈交换机会持续打印 0x07，但是使用putty和SecureCRT不会这样。
 func (sc *sshClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err error) {
 	var (
 		buf      bytes.Buffer
@@ -37,7 +39,10 @@ func (sc *sshClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err error)
 
 	// 函数返回的操作
 	var returnFn = func(err error) (string, error) {
-		if waitForRe == nil && err == ErrReadTimeout { // no timeout if read all
+		if errors.Is(err, io.EOF) {
+			err = nil
+		}
+		if waitForRe == nil && errors.Is(err, ErrReadTimeout) { // no timeout if read all
 			err = nil
 		}
 
@@ -48,7 +53,7 @@ func (sc *sshClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err error)
 			_, _ = sc.sessionWriter.Write([]byte(s))
 		}
 
-		return s, err
+		return s, errors.Wrapf(err, "read until the %q regular expression", waitForRe.String())
 	}
 
 	timeout := sc.Timeout
@@ -107,8 +112,8 @@ func (sc *sshClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err error)
 	}
 }
 
-
 // read one byte from tcp stream
 func (sc *sshClient) readByte() (b byte, err error) {
-	return sc.stdout.ReadByte()
+	b, err = sc.stdout.ReadByte()
+	return b, errors.Wrap(err, "read a byte from TCP stream")
 }

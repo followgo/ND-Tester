@@ -1,10 +1,9 @@
 package telnetclient
 
 import (
-	"errors"
+	"github.com/followgo/ND-Tester/public/errors"
 )
 
 var (
 	ErrReadTimeout  = errors.New("read timeout")
-	ErrWriteTimeout = errors.New("write timeout")
 )

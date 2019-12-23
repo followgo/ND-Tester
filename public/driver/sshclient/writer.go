@@ -1,20 +1,20 @@
 package sshclient
 
 import (
-	"fmt"
+	"github.com/followgo/ND-Tester/public/errors"
 )
 
 // Cmd sends command and returns output
 func (sc *sshClient) Cmd(cmd string) (s string, err error) {
 	if err := sc.Write([]byte(cmd)); err != nil {
-		return "", err
+		return "",  errors.Wrapf(err, "write the %q command", cmd)
 	}
 	return sc.readUntilRe(sc.promptRe)
 }
 
 // Write is the same as WriteRaw, but adds CRLF to given string
 func (sc *sshClient) Write(bytes []byte) error {
-	bytes = append(bytes, '\n')
+	bytes = append(bytes, sc.LineBreaks...)
 	return sc.WriteRaw(bytes)
 }
 
@@ -22,7 +22,7 @@ func (sc *sshClient) Write(bytes []byte) error {
 func (sc *sshClient) WriteRaw(bytes []byte) (err error) {
 	_, err = sc.stdin.Write(bytes)
 	if err != nil {
-		return fmt.Errorf("failed to writeRaw(): [%w]", err)
+		return errors.Wrap(err, "write bytes to TCP connection")
 	}
 	return nil
 }

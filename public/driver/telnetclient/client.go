@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"regexp"
 	"time"
+
+	"github.com/followgo/ND-Tester/public/errors"
 )
 
 // callbackPattern 钩子函数
@@ -57,10 +59,10 @@ func New(host, username, password string) *telnetClient {
 // SetSessionFile 设置会话记录文件
 func (c *telnetClient) SetSessionFile(filename string) (err error) {
 	if err := os.MkdirAll(filepath.Dir(filename), 0755); err != nil {
-		return err
+		return errors.Wrapf(err, "cannot access the directory where the %s file placed", filename)
 	}
 	c.sessionWriter, err = os.OpenFile(filename, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
-	return err
+	return errors.Wrapf(err, "open the %s file", filename)
 }
 
 // SetSessionFile 设置会话记录器
@@ -71,23 +73,23 @@ func (c *telnetClient) SetSessionWriter(w io.WriteCloser) {
 // SetPrompt allows you to change prompt without re-creating ssh client. Default is `(?msi:[\$%#>]$)`
 func (c *telnetClient) SetPromptExpr(pattern string) (err error) {
 	c.promptRe, err = regexp.Compile(pattern)
-	return err
+	return errors.Wrapf(err, "compile the %q regular expression", pattern)
 }
 
 // SetLoginPrompt sets custom login prompt. Default is `[Uu]ser(\s)?[Nn]ame\:(\s+)?$`
 func (c *telnetClient) SetLoginPromptExpr(pattern string) (err error) {
 	c.loginPromptRe, err = regexp.Compile(pattern)
-	return err
+	return errors.Wrapf(err, "compile the %q regular expression", pattern)
 }
 
 // SetPasswordPrompt sets custom password prompt. Default is `[Pp]ass[Ww]ord\:$`
 func (c *telnetClient) SetPasswordPromptExpr(pattern string) (err error) {
 	c.passwordPromptRe, err = regexp.Compile(pattern)
-	return err
+	return errors.Wrapf(err, "compile the %q regular expression", pattern)
 }
 
 // Close closes telnet connection.
-func (c *telnetClient) Close()  {
+func (c *telnetClient) Close() {
 	if c.conn != nil {
 		for _, byeCmd := range c.ByeCommands {
 			_ = c.Write([]byte( byeCmd))
@@ -109,7 +111,7 @@ func (c *telnetClient) Close()  {
 func (c *telnetClient) RegisterTurnPageCallback(pattern string, callback func()) error {
 	re, err := regexp.Compile(pattern)
 	if err != nil {
-		return err
+		return errors.Wrapf(err, "compile the %q regular expression", pattern)
 	}
 
 	c.callbacks = append(c.callbacks, callbackPattern{

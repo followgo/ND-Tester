@@ -2,12 +2,18 @@ package telnetclient
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/followgo/ND-Tester/public/errors"
 )
+
+// ReadAll read all from tcp stream
+func (c *telnetClient) ReadAll() (s string, err error) {
+	return c.readUntilRe(nil)
+}
 
 // ReadUntil reads tcp stream from server until 'waitfor' regex matches.
 // Returns gathered output and error, if any.
@@ -15,14 +21,9 @@ import (
 func (c *telnetClient) ReadUntil(waitfor string) (s string, err error) {
 	waitForRe, err := regexp.Compile(waitfor)
 	if err != nil {
-		return "", fmt.Errorf("cannot compile 'waitfor' regexp: [%w]", err)
+		return "", errors.Wrapf(err, "compile the %q regular expression", waitfor)
 	}
 	return c.readUntilRe(waitForRe)
-}
-
-// ReadAll read all from tcp stream
-func (c *telnetClient) ReadAll() (s string, err error) {
-	return c.readUntilRe(nil)
 }
 
 // ReadUntilRe reads tcp stream from server until 'waitForRe' regex.Regexp
@@ -38,10 +39,10 @@ func (c *telnetClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err erro
 
 	// 函数返回的操作
 	var returnFn = func(err error) (string, error) {
-		if err == io.EOF {
+		if errors.Is(err, io.EOF) {
 			err = nil
 		}
-		if waitForRe == nil && err == ErrReadTimeout { // no timeout if read all
+		if waitForRe == nil && errors.Is(err, ErrReadTimeout) { // no timeout if read all
 			err = nil
 		}
 
@@ -52,14 +53,14 @@ func (c *telnetClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err erro
 			_, _ = c.sessionWriter.Write([]byte(s))
 		}
 
-		return s, err
+		return s, errors.Wrapf(err, "read until the %q regular expression", waitForRe.String())
 	}
 
 	timeout := c.Timeout
 	if waitForRe == nil {
 		timeout = time.Second
 	}
-	after := time.After(timeout) // 如果遇到翻页，则重现赋值
+	after := time.After(timeout) // 翻页操作会重新设置值
 
 	for {
 		select {
@@ -77,7 +78,7 @@ func (c *telnetClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err erro
 
 				b1, err := c.readByte()
 				if err != nil {
-					return returnFn(fmt.Errorf("error while reading escape sequence: [%w]", err))
+					return returnFn(err)
 				}
 				seq = append(seq, b1)
 
@@ -86,7 +87,7 @@ func (c *telnetClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err erro
 					for {
 						bn, err := c.readByte()
 						if err != nil {
-							return returnFn(fmt.Errorf("error while reading escape subnegotiation sequence: [%w]", err))
+							return returnFn(err)
 						}
 						seq = append(seq, bn)
 						if bn == cmdSE {
@@ -97,14 +98,14 @@ func (c *telnetClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err erro
 					// not subsequence.
 					bn, err := c.readByte()
 					if err != nil {
-						return returnFn(fmt.Errorf("error while reading IAC sequence: [%w]", err))
+						return returnFn(err)
 					}
 					seq = append(seq, bn)
 				}
 
 				// Sequence finished, do something with it:
 				if err := c.negotiate(seq); err != nil {
-					return returnFn(fmt.Errorf("failed to negotiate connection: [%w]", err))
+					return returnFn(errors.Wrap(err, "negotiation failed"))
 				}
 			}
 
@@ -188,10 +189,10 @@ func (c *telnetClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err erro
 // read one byte from tcp stream
 func (c *telnetClient) readByte() (b byte, err error) {
 	if err := c.conn.SetReadDeadline(time.Now().Add(c.Timeout)); err != nil {
-		return 0, err
+		return 0, errors.Wrap(err, "set read deadline")
 	}
 	data := make([]byte, 1, 1)
 	_, err = c.conn.Read(data)
 
-	return data[0], err
+	return data[0], errors.Wrap(err, "read a byte from TCP stream")
 }
