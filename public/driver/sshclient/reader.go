@@ -53,7 +53,7 @@ func (sc *sshClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err error)
 			_, _ = sc.sessionWriter.Write([]byte(s))
 		}
 
-		return s, errors.Wrapf(err, "read until the %q regular expression", waitForRe.String())
+		return s, errors.Wrap(err, "read until a regular expression")
 	}
 
 	timeout := sc.Timeout
@@ -62,6 +62,7 @@ func (sc *sshClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err error)
 	}
 	after := time.After(timeout) // 如果遇到翻页，则重现赋值
 
+LOOP:
 	for {
 		select {
 		case <-after:
@@ -69,7 +70,20 @@ func (sc *sshClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err error)
 		default:
 			b, err := sc.readByte()
 			if err != nil {
+				if errors.Is(err, io.EOF) {
+					time.Sleep(500 * time.Millisecond)
+					continue LOOP
+				}
+
 				return returnFn(err)
+			}
+
+			// 退格
+			if b == 0x8 {
+				if lastLine.Len() > 0 {
+					lastLine.Truncate(lastLine.Len() - 1)
+				}
+				continue
 			}
 
 			if b == '\r' {
@@ -108,6 +122,8 @@ func (sc *sshClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err error)
 					return returnFn(nil)
 				}
 			}
+
+			continue LOOP
 		}
 	}
 }

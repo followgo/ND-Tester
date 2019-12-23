@@ -92,7 +92,7 @@ func (c *telnetClient) SetPasswordPromptExpr(pattern string) (err error) {
 func (c *telnetClient) Close() {
 	if c.conn != nil {
 		for _, byeCmd := range c.ByeCommands {
-			_ = c.Write([]byte( byeCmd))
+			_ = c.Write([]byte(byeCmd))
 		}
 
 		_, _ = c.ReadAll()

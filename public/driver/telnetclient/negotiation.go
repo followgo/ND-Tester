@@ -31,7 +31,7 @@ func (c *telnetClient) negotiate(sequence []byte) (err error) {
 		switch sequence[2] {
 		case optTERMTYPE:
 			// set terminal to xterm
-			err = c.WriteRaw([]byte{cmdIAC, cmdSB, optTERMTYPE, opt_SB_IS, 'X', 'T', 'E', 'R', 'M', cmdIAC, cmdSE})
+			err = c.WriteRaw([]byte{cmdIAC, cmdSB, optTERMTYPE, opt_SB_IS, 'V', 'T', '2', '2', '0', cmdIAC, cmdSE})
 			break
 		case optWINSIZE:
 			// set terminal's window size

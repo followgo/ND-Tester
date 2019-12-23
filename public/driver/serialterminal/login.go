@@ -19,7 +19,7 @@ func (st *serialTerminal) OpenAndLogin() (err error) {
 		Timeout:  st.Timeout,
 	})
 	if err != nil {
-		return errors.Wrap(err, "打开端口")
+		return errors.Wrap(err, "open serial port")
 	}
 
 	return st.Login()
@@ -37,15 +37,15 @@ LOOP:
 				if _, err := st.readUntilRe(st.loginPromptRe); err != nil {
 					if IsTimeout(err) {
 						if err := st.WriteRaw([]byte{'\n'}); err != nil {
-							return errors.Wrap(err, "按回车")
+							return errors.Wrap(err, "write enter key")
 						}
 						continue LOOP
 					}
-					return errors.Wrap(err, "等待用户名提示符")
+					return errors.Wrap(err, "wait for login prompt")
 				}
 
 				if err := st.Write([]byte(st.Username)); err != nil {
-					return errors.Wrap(err, "写入登陆用户名")
+					return errors.Wrap(err, "write username")
 				}
 			}
 
@@ -53,21 +53,21 @@ LOOP:
 				if _, err := st.readUntilRe(st.passwordPromptRe); err != nil {
 					if IsTimeout(err) {
 						if err := st.WriteRaw([]byte{'\n'}); err != nil {
-							return errors.Wrap(err, "按回车")
+							return errors.Wrap(err, "write enter key")
 						}
 						continue LOOP
 					}
-					return errors.Wrap(err, "等待密码提示符")
+					return errors.Wrap(err, "wait for password prompt")
 				}
 
 				if err := st.Write([]byte(st.Password)); err != nil {
-					return errors.Wrap(err, "写入登陆密码")
+					return errors.Wrap(err, "write password")
 				}
 			}
 
 			// and wait for prompt
 			_, err = st.readUntilRe(st.promptRe)
-			return errors.Wrap(err, "等待提示符")
+			return errors.Wrap(err, "wait for prompt")
 		}
 	}
 }

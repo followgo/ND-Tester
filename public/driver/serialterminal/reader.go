@@ -2,6 +2,7 @@ package serialterminal
 
 import (
 	"bytes"
+	"io"
 	"regexp"
 	"strings"
 	"time"
@@ -12,7 +13,7 @@ import (
 // ReadAll read all from tcp stream
 func (st *serialTerminal) ReadAll() (s string, err error) {
 	s, err = st.readUntilRe(nil)
-	return s, errors.Wrap(err, "读取所有数据")
+	return s, errors.Wrap(err, "read all from port")
 }
 
 // ReadUntil reads tcp stream from server until 'waitfor' regex matches.
@@ -21,10 +22,9 @@ func (st *serialTerminal) ReadAll() (s string, err error) {
 func (st *serialTerminal) ReadUntil(waitfor string) (s string, err error) {
 	waitForRe, err := regexp.Compile(waitfor)
 	if err != nil {
-		return "", errors.Wrapf(err, "编译 %q", waitfor)
+		return "", errors.Wrapf(err, "compile the %q regular expression", waitfor)
 	}
-	s, err = st.readUntilRe(waitForRe)
-	return s, errors.Wrapf(err, "读取直到匹配 %q", waitfor)
+	return st.readUntilRe(waitForRe)
 }
 
 // ReadUntilRe reads tcp stream from server until 'waitForRe' regex.Regexp
@@ -40,6 +40,13 @@ func (st *serialTerminal) readUntilRe(waitForRe *regexp.Regexp) (s string, err e
 
 	// 读取完成后的操作
 	var returnFn = func(err error) (string, error) {
+		if errors.Is(err, io.EOF) {
+			err = nil
+		}
+		if waitForRe == nil && IsTimeout(err) { // no timeout if read all
+			err = nil
+		}
+
 		buf.Write(lastLine.Bytes())
 		s := buf.String()
 
@@ -47,23 +54,32 @@ func (st *serialTerminal) readUntilRe(waitForRe *regexp.Regexp) (s string, err e
 			_, _ = st.sessionWriter.Write([]byte(s))
 		}
 
-		return s, errors.Wrapf(err, "读取直到匹配 %q 表达式", waitForRe.String())
+		return s, errors.Wrap(err, "read until a regular expression")
 	}
 
 	timeout := st.Timeout
 	if waitForRe == nil {
 		timeout = time.Second
 	}
-	after := time.After(timeout) // 如果遇到翻页，则重现赋值
+	after := time.After(timeout) // 翻页操作会重新赋值
 
+	LOOP:
 	for {
 		select {
 		case <-after:
-			return returnFn(nil)
+			return returnFn(ErrReadTimeout)
 		default:
 			b, err := st.readByte()
 			if err != nil {
 				return returnFn(err)
+			}
+
+			// 退格
+			if b == 0x8 {
+				if lastLine.Len() > 0 {
+					lastLine.Truncate(lastLine.Len() - 1)
+				}
+				continue
 			}
 
 			// 忽略掉 FirstMile 交换机翻页后出现的长空白
@@ -117,6 +133,8 @@ func (st *serialTerminal) readUntilRe(waitForRe *regexp.Regexp) (s string, err e
 					return returnFn(nil)
 				}
 			}
+
+			continue LOOP
 		}
 	}
 }
@@ -125,5 +143,5 @@ func (st *serialTerminal) readUntilRe(waitForRe *regexp.Regexp) (s string, err e
 func (st *serialTerminal) readByte() (b byte, err error) {
 	data := make([]byte, 1, 1)
 	_, err = st.p.Read(data)
-	return data[0], errors.Wrap(err, "读取一个字节")
+	return data[0], errors.Wrap(err, "read a byte from port")
 }

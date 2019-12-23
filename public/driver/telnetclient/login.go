@@ -45,5 +45,7 @@ func (c *telnetClient) login() (err error) {
 		}
 	}
 
+	// and wait for prompt
+	_, err = c.readUntilRe(c.promptRe)
 	return errors.Wrap(err, "wait for prompt")
 }

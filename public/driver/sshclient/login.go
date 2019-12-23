@@ -48,5 +48,11 @@ func (sc *sshClient) OpenAndLogin() (err error) {
 		return errors.Wrap(err, "dial to")
 	}
 
-	return sc.createSession()
+	if err := sc.createSession(); err != nil {
+		return errors.Wrap(err, "create session")
+	}
+
+	// and wait for prompt
+	_, err = sc.readUntilRe(sc.promptRe)
+	return errors.Wrap(err, "wait for prompt")
 }

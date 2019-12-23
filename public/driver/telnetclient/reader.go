@@ -12,7 +12,8 @@ import (
 
 // ReadAll read all from tcp stream
 func (c *telnetClient) ReadAll() (s string, err error) {
-	return c.readUntilRe(nil)
+	s, err = c.readUntilRe(nil)
+	return s, errors.Wrap(err, "read all from tcp stream")
 }
 
 // ReadUntil reads tcp stream from server until 'waitfor' regex matches.
@@ -53,15 +54,16 @@ func (c *telnetClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err erro
 			_, _ = c.sessionWriter.Write([]byte(s))
 		}
 
-		return s, errors.Wrapf(err, "read until the %q regular expression", waitForRe.String())
+		return s, errors.Wrap(err, "read until a regular expression")
 	}
 
 	timeout := c.Timeout
 	if waitForRe == nil {
 		timeout = time.Second
 	}
-	after := time.After(timeout) // 翻页操作会重新设置值
+	after := time.After(timeout) // 翻页操作会重新赋值
 
+	LOOP:
 	for {
 		select {
 		case <-after:
@@ -182,6 +184,8 @@ func (c *telnetClient) readUntilRe(waitForRe *regexp.Regexp) (s string, err erro
 					return returnFn(nil)
 				}
 			}
+
+			continue LOOP
 		}
 	}
 }

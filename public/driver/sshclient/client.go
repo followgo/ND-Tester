@@ -32,8 +32,6 @@ type sshClient struct {
 
 	// 命令行提示符
 	promptRe         *regexp.Regexp
-	loginPromptRe    *regexp.Regexp
-	passwordPromptRe *regexp.Regexp
 	callbacks        []callbackPattern
 
 	client  *ssh.Client
@@ -55,8 +53,6 @@ func New(host, username, password string) *sshClient {
 		LineBreaks: []byte{'\n'},
 
 		promptRe:         regexp.MustCompile(`(?msi:[\$%#>]$)`),
-		loginPromptRe:    regexp.MustCompile(`[Uu]ser(\s)?[Nn]ame\:(\s+)?$`),
-		passwordPromptRe: regexp.MustCompile(`[Pp]ass[Ww]ord\:$`),
 		callbacks:        make([]callbackPattern, 0, 5),
 
 		stdout: bytes.NewBuffer(nil),
@@ -84,23 +80,11 @@ func (sc *sshClient) SetPromptExpr(pattern string) (err error) {
 	return errors.Wrapf(err, "compile the %q regular expression", pattern)
 }
 
-// SetLoginPrompt sets custom login prompt. Default is `[Uu]ser(\s)?[Nn]ame\:(\s+)?$`
-func (sc *sshClient) SetLoginPromptExpr(pattern string) (err error) {
-	sc.loginPromptRe, err = regexp.Compile(pattern)
-	return errors.Wrapf(err, "compile the %q regular expression", pattern)
-}
-
-// SetPasswordPrompt sets custom password prompt. Default is `[Pp]ass[Ww]ord\:$`
-func (sc *sshClient) SetPasswordPromptExpr(pattern string) (err error) {
-	sc.passwordPromptRe, err = regexp.Compile(pattern)
-	return errors.Wrapf(err, "compile the %q regular expression", pattern)
-}
-
 // Close 关闭连接
 func (sc *sshClient) Close()  {
 	if sc.session != nil {
 		for _, byeCmd := range sc.ByeCommands {
-			_ = sc.Write([]byte( byeCmd))
+			_ = sc.Write([]byte(byeCmd))
 		}
 
 		_ = sc.session.Close()

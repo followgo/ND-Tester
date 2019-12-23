@@ -5,15 +5,6 @@ Simple telnet client lib, written in golang.
 ## Example
 
 ```go
-package main
-
-import (
-	"fmt"
-	"log"
-
-	"github.com/followgo/ND-Tester/public/driver/telnetclient"
-)
-
 func main() {
 	// SC3700 只有密码，没有用户名
 	c := telnetclient.New("192.168.118.1", "", "firstmile")

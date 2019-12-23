@@ -26,8 +26,8 @@ func (sc *sshClient) createSession() (err error) {
 		ssh.TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
 		ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
 	}
-	if err := sc.session.RequestPty("xterm", 500, 200, modes); err != nil {
-		return errors.Wrap(err, "set terminal mode")
+	if err := sc.session.RequestPty("vt220", 500, 200, modes); err != nil { // vt220 不支持颜色
+		return errors.Wrap(err, "set terminal mode to vt220")
 	}
 
 	// Start remote shell

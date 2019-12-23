@@ -1,6 +1,8 @@
 package sshclient
 
 import (
+	"time"
+
 	"github.com/followgo/ND-Tester/public/errors"
 )
 
@@ -15,6 +17,11 @@ func (sc *sshClient) Cmd(cmd string) (s string, err error) {
 // Write is the same as WriteRaw, but adds CRLF to given string
 func (sc *sshClient) Write(bytes []byte) error {
 	bytes = append(bytes, sc.LineBreaks...)
+
+	if sc.sessionWriter!=nil{
+		sc.sessionWriter.Write( bytes)
+	}
+
 	return sc.WriteRaw(bytes)
 }
 
@@ -24,5 +31,6 @@ func (sc *sshClient) WriteRaw(bytes []byte) (err error) {
 	if err != nil {
 		return errors.Wrap(err, "write bytes to TCP connection")
 	}
+	time.Sleep(time.Second)
 	return nil
 }
