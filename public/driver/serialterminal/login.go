@@ -22,11 +22,11 @@ func (st *serialTerminal) OpenAndLogin() (err error) {
 		return errors.Wrap(err, "open serial port")
 	}
 
-	return st.Login()
+	return st.login()
 }
 
 // Login is a simple wrapper for login/password auth
-func (st *serialTerminal) Login() (err error) {
+func (st *serialTerminal) login() (err error) {
 LOOP:
 	for {
 		select {

@@ -1,20 +1,19 @@
 package driver
 
-// 换行符和回车符
-const (
-	CR = byte('\r')
-	LF = byte('\n')
-)
+// DriName 名称
+type DriName string
 
-// 默认端口
 const (
+	// 换行符和回车符
+	CR = '\r'
+	LF = '\n'
+
+	// 默认端口
 	DefaultPortForTelnet = 23
 	DefaultPortForSSH    = 22
-)
 
-// 驱动名称
-const (
-	DriveNameOfTelnet = "telnet"
-	DriveNameOfSSH    = "ssh"
-	DriveNameOfSerial = "serial"
+	// 驱动名称
+	TelnetDriver DriName = "telnet"
+	SSHDriver    DriName = "ssh"
+	SerialDriver DriName = "serial"
 )
