@@ -1,8 +1,12 @@
 package driver
 
+import (
+	"io"
+)
+
 // Driver 驱动接口
 type Driver interface {
-	// Login 连接主机，并且输入用户名和密码，并且等待返回
+	// OpenAndLogin 连接主机，并且输入用户名和密码，并且等待返回
 	// 连接主机后，依次写入 words，因为有些主机的登陆要求是输入用户名和密码，有些的主机只要输入密码。
 	OpenAndLogin() error
 
@@ -23,4 +27,8 @@ type Driver interface {
 
 	// ReadUntil 读取直到匹配 waitfor 正则表达式
 	ReadUntil(waitfor string) (string, error)
+
+	// 设置会话记录器
+	SetSessionFile(file string) error
+	SetSessionWriter(io.WriteCloser)
 }

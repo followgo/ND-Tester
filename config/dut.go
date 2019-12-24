@@ -8,7 +8,7 @@ var Dut = DutConfig{
 	Telnet: dutTelnetConfig{
 		Port:                  23,
 		TimeoutMs:             5000,
-		NewlineChars:          []byte{'\n'},
+		Linebreak:             "\n",
 		ByeCommands:           []string{"exit"},
 		PromptPattern:         `(?msi:[\$%#>]$)`,
 		LoginPromptPattern:    `(?msi:user(\s)?name\:(\s+)?$)`,
@@ -20,7 +20,7 @@ var Dut = DutConfig{
 		StopBits:              1,
 		Parity:                "N",
 		TimeoutMs:             5000,
-		NewlineChars:          []byte{'\n'},
+		Linebreak:             "\n",
 		ByeCommands:           []string{"exit"},
 		PromptPattern:         `(?msi:[\$%#>]$)`,
 		LoginPromptPattern:    `(?msi:user(\s)?name\:(\s+)?$)`,
@@ -29,7 +29,7 @@ var Dut = DutConfig{
 	SSH: dutSSHConfig{
 		Port:          23,
 		TimeoutMs:     5000,
-		NewlineChars:  []byte{'\n'},
+		Linebreak:     "\n",
 		ByeCommands:   []string{"exit"},
 		PromptPattern: `(?msi:[\$%#>]$)`,
 	},
@@ -49,11 +49,11 @@ type DutConfig struct {
 type dutTelnetConfig struct {
 	Port uint16 `json:"port" yaml:"port" toml:"port"`
 
-	Username     string   `json:"username" yaml:"username" toml:"username"` // 如果为空则使用主用户名和密码
-	Password     string   `json:"password" yaml:"password" toml:"password"`
-	TimeoutMs    int64    `json:"timeout_ms" yaml:"timeout_ms" toml:"timeout_ms"`
-	NewlineChars []byte   `json:"newline_chars" yaml:"newline_chars" toml:"newline_chars"` // 写入数据的换行符
-	ByeCommands  []string `json:"bye_commands" yaml:"bye_commands" toml:"bye_commands"`    // 断开连接前要执行的命令
+	Username    string   `json:"username" yaml:"username" toml:"username"` // 如果为空则使用主用户名和密码
+	Password    string   `json:"password" yaml:"password" toml:"password"`
+	TimeoutMs   int64    `json:"timeout_ms" yaml:"timeout_ms" toml:"timeout_ms"`
+	Linebreak   string   `json:"linebreak" yaml:"linebreak" toml:"linebreak"`          // 写入数据的换行
+	ByeCommands []string `json:"bye_commands" yaml:"bye_commands" toml:"bye_commands"` // 断开连接前要执行的命令
 
 	PromptPattern         string            `json:"prompt_pattern" yaml:"prompt_pattern" toml:"prompt_pattern"`
 	LoginPromptPattern    string            `json:"login_prompt_pattern" yaml:"login_prompt_pattern" toml:"login_prompt_pattern"`
@@ -68,11 +68,11 @@ type dutSerialConfig struct {
 	StopBits int    `json:"stop_bits" yaml:"stop_bits" toml:"stop_bits"` // Stop bits: 1 or 2 (default 1)
 	Parity   string `json:"parity" yaml:"parity" toml:"parity"`          // Parity: N - None, E - Even, O - Odd (default N)
 
-	Username     string   `json:"username" yaml:"username" toml:"username"` // 如果为空则使用主用户名和密码
-	Password     string   `json:"password" yaml:"password" toml:"password"`
-	TimeoutMs    int64    `json:"timeout_ms" yaml:"timeout_ms" toml:"timeout_ms"`
-	NewlineChars []byte   `json:"newline_chars" yaml:"newline_chars" toml:"newline_chars"` // 写入数据的换行符
-	ByeCommands  []string `json:"bye_commands" yaml:"bye_commands" toml:"bye_commands"`    // 断开连接前要执行的命令
+	Username    string   `json:"username" yaml:"username" toml:"username"` // 如果为空则使用主用户名和密码
+	Password    string   `json:"password" yaml:"password" toml:"password"`
+	TimeoutMs   int64    `json:"timeout_ms" yaml:"timeout_ms" toml:"timeout_ms"`
+	Linebreak   string   `json:"linebreak" yaml:"linebreak" toml:"linebreak"`          // 写入数据的换行
+	ByeCommands []string `json:"bye_commands" yaml:"bye_commands" toml:"bye_commands"` // 断开连接前要执行的命令
 
 	PromptPattern         string            `json:"prompt_pattern" yaml:"prompt_pattern" toml:"prompt_pattern"`
 	LoginPromptPattern    string            `json:"login_prompt_pattern" yaml:"login_prompt_pattern" toml:"login_prompt_pattern"`
@@ -88,8 +88,8 @@ type dutSSHConfig struct {
 	Password       string   `json:"password" yaml:"password" toml:"password"`
 	PrivateKeyFile string   `json:"private_key_file" yaml:"private_key_file" toml:"private_key_file"`
 	TimeoutMs      int64    `json:"timeout_ms" yaml:"timeout_ms" toml:"timeout_ms"`
-	NewlineChars   []byte   `json:"newline_chars" yaml:"newline_chars" toml:"newline_chars"` // 写入数据的换行符
-	ByeCommands    []string `json:"bye_commands" yaml:"bye_commands" toml:"bye_commands"`    // 断开连接前要执行的命令
+	Linebreak      string   `json:"linebreak" yaml:"linebreak" toml:"linebreak"`          // 写入数据的换行
+	ByeCommands    []string `json:"bye_commands" yaml:"bye_commands" toml:"bye_commands"` // 断开连接前要执行的命令
 
 	PromptPattern    string            `json:"prompt_pattern" yaml:"prompt_pattern" toml:"prompt_pattern"`
 	CallbackPatterns []callbackPattern `json:"callback_patterns" yaml:"callback_patterns" toml:"callback_patterns"`
