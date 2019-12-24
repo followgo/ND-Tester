@@ -11,7 +11,7 @@ import (
 	"strings"
 
 	"github.com/pelletier/go-toml"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/followgo/ND-Tester/public/errors"
 )
@@ -82,7 +82,6 @@ func (c *configurator) Load() error {
 
 // Save 保存配置到指定的文件
 func (c *configurator) Save(fileComment string) error {
-
 	f, err := os.OpenFile(c.Filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
 		return errors.Wrapf(err,"open the %q file", c.Filename)

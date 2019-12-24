@@ -14,7 +14,7 @@ import (
 func LoadConfigs() error {
 	var (
 		cfgDir                  = "./config"
-		hostCfgFile, dutCfgFile = filepath.Join(cfgDir, "host.toml"), filepath.Join(cfgDir, "dut.toml")
+		hostCfgFile, dutCfgFile = filepath.Join(cfgDir, "host.yaml"), filepath.Join(cfgDir, "dut.yaml")
 	)
 
 	if err := os.MkdirAll(cfgDir, 0755); err != nil {
