@@ -4,20 +4,30 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/followgo/ND-Tester/config"
+	"github.com/followgo/ND-Tester/public/errors"
 	"github.com/followgo/ND-Tester/public/mylogrus"
 )
 
 func main() {
-	// 加载配置文件
-	if err := config.LoadConfigs(); err != nil {
-		logrus.WithError(err).Fatalln("加载配置文件失败")
+	// 加载Host配置文件
+	if err := config.LoadHostConfig(); err != nil {
+		logrus.WithError(err).Fatalln("加载 Host 配置文件失败")
 	} else {
-		logrus.Infoln("已经加载配置文件")
+		logrus.Infoln("已经加载 Host 配置文件")
 	}
 
 	// 初始化日志记录器
 	initLogger()
 	logrus.Infoln("已经初始化日志记录器")
+
+	// 加载 Dut 配置文件
+	if err := config.LoadDutConfig(); err != nil {
+		logrus.WithError(err).Fatalln("加载 Dut 配置文件失败")
+	} else {
+		logrus.Infoln("已经加载 Dut 配置文件")
+	}
+
+	logrus.WithError(errors.New("test")).Errorln("测试")
 }
 
 // initLogger 初始化日志记录器
@@ -31,9 +41,9 @@ func initLogger() {
 	}
 
 	opt.BaseFile = config.Host.Logger.BaseFile
-	opt.MaxMegaSize = config.Host.Logger.MaxMegaSize
-	opt.MaxBackups = config.Host.Logger.MaxBackups
-	opt.MaxAgeDays = config.Host.Logger.MaxAgeDays
-	opt.Console = config.Host.Logger.OutputConsole
+	opt.OverWrite = config.Host.Logger.OverWrite
+	opt.OutputConsole = config.Host.Logger.OutputConsole
+	opt.UseRotate = false
+	opt.UseJSONFormat = false
 	mylogrus.SetStdLogrus(opt)
 }

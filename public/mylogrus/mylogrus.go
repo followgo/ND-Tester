@@ -16,8 +16,24 @@ func NewMyLogrus(opt Option) *logrus.Logger {
 	}
 	logger := logrus.New()
 
-	// rotate and compress writer
-	rollingWriter := NewWriterWithSizeRotate(opt.BaseFile, opt.MaxMegaSize, opt.MaxBackups, opt.MaxAgeDays)
+	var w io.WriteCloser
+	if opt.UseRotate {
+		// rotate and compress writer
+		w = NewWriterWithSizeRotate(opt.BaseFile, opt.MaxMegaSize, opt.MaxBackups, opt.MaxAgeDays)
+	} else {
+		var openFlag int
+		if opt.OverWrite {
+			openFlag = os.O_CREATE | os.O_WRONLY | os.O_TRUNC
+		} else {
+			openFlag = os.O_CREATE | os.O_WRONLY | os.O_APPEND
+		}
+
+		var err error
+		if w, err = os.OpenFile(opt.BaseFile, openFlag, 0644); err != nil {
+			logrus.WithError(err).Fatalln("create log file")
+		}
+	}
+
 	logger.SetLevel(opt.Level)
 
 	// 设置日志结构 text or json
@@ -27,10 +43,10 @@ func NewMyLogrus(opt Option) *logrus.Logger {
 		logger.Formatter = &logrus.TextFormatter{TimestampFormat: opt.DataFormatter}
 	}
 
-	if opt.Console {
-		logger.Out = io.MultiWriter(rollingWriter, os.Stdout)
+	if opt.OutputConsole {
+		logger.Out = io.MultiWriter(w, os.Stdout)
 	} else {
-		logger.Out = rollingWriter
+		logger.Out = w
 	}
 
 	return logger
@@ -41,8 +57,24 @@ func SetStdLogrus(opt Option) {
 		opt = DefaultOption
 	}
 
-	// rotate and compress writer
-	rollingWriter := NewWriterWithSizeRotate(opt.BaseFile, opt.MaxMegaSize, opt.MaxBackups, opt.MaxAgeDays)
+	var w io.WriteCloser
+	if opt.UseRotate {
+		// rotate and compress writer
+		w = NewWriterWithSizeRotate(opt.BaseFile, opt.MaxMegaSize, opt.MaxBackups, opt.MaxAgeDays)
+	} else {
+		var openFlag int
+		if opt.OverWrite {
+			openFlag = os.O_CREATE | os.O_WRONLY | os.O_TRUNC
+		} else {
+			openFlag = os.O_CREATE | os.O_WRONLY | os.O_APPEND
+		}
+
+		var err error
+		if w, err = os.OpenFile(opt.BaseFile, openFlag, 0644); err != nil {
+			logrus.WithError(err).Fatalln("create log file")
+		}
+	}
+
 	logrus.SetLevel(opt.Level)
 
 	// 设置日志结构 text or json
@@ -54,9 +86,9 @@ func SetStdLogrus(opt Option) {
 	}
 	logrus.SetFormatter(formatter)
 
-	if opt.Console {
-		logrus.SetOutput(io.MultiWriter(rollingWriter, os.Stdout))
+	if opt.OutputConsole {
+		logrus.SetOutput(io.MultiWriter(w, os.Stdout))
 	} else {
-		logrus.SetOutput(rollingWriter)
+		logrus.SetOutput(w)
 	}
 }

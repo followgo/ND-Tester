@@ -6,9 +6,7 @@ var Host = HostConfig{
 	Logger: hostLoggerConfig{
 		BaseFile:      "./logs/main.log",
 		Level:         "INFO",
-		MaxMegaSize:   100,
-		MaxBackups:    7,
-		MaxAgeDays:    7,
+		OverWrite:     false,
 		OutputConsole: true,
 	},
 }
@@ -23,8 +21,6 @@ type HostConfig struct {
 type hostLoggerConfig struct {
 	BaseFile      string `json:"base_file" yaml:"base_file" toml:"base_file"`
 	Level         string `json:"level" yaml:"level" toml:"level"`
-	MaxMegaSize   int    `json:"max_mega_size" yaml:"max_mega_size" toml:"max_mega_size"`
-	MaxBackups    int    `json:"max_backups" yaml:"max_backups" toml:"max_backups"`
-	MaxAgeDays    int    `json:"max_age_days" yaml:"max_age_days" toml:"max_age_days"`
+	OverWrite     bool   `json:"over_write" yaml:"over_write" toml:"over_write"`
 	OutputConsole bool   `json:"output_console" yaml:"output_console" toml:"output_console"`
 }
