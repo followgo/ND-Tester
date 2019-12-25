@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/pelletier/go-toml"
+	"github.com/BurntSushi/toml"
 	"gopkg.in/yaml.v3"
 
 	"github.com/followgo/ND-Tester/public/errors"
@@ -62,7 +62,7 @@ func NewConfigurator(filename string, targetObj interface{}) *configurator {
 func (c *configurator) Load() error {
 	data, err := ioutil.ReadFile(c.Filename)
 	if err != nil {
-		return errors.Wrapf(err,"read the %q file", c.Filename)
+		return errors.Wrapf(err, "read the %q file", c.Filename)
 	}
 
 	// 添加到监视 hashMap 中
@@ -84,32 +84,30 @@ func (c *configurator) Load() error {
 func (c *configurator) Save(fileComment string) error {
 	f, err := os.OpenFile(c.Filename, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
 	if err != nil {
-		return errors.Wrapf(err,"open the %q file", c.Filename)
+		return errors.Wrapf(err, "open the %q file", c.Filename)
 	}
 	defer f.Close()
 
-	var buf bytes.Buffer
+	var buf = new(bytes.Buffer)
 	switch typ := strings.ToLower(c.fileType); typ {
 	case ".yaml":
 		data, err := yaml.Marshal(c.TargetObj)
 		if err != nil {
-			return errors.Wrapf(err,"save config to %q file",c.Filename)
+			return errors.Wrapf(err, "save config to %q file", c.Filename)
 		}
 		buf.WriteString("# " + fileComment + "\n\n")
 		buf.Write(data)
 
 	case ".toml":
-		data, err := toml.Marshal(c.TargetObj)
-		if err != nil {
-			return errors.Wrapf(err,"save config to %q file",c.Filename)
-		}
 		buf.WriteString("# " + fileComment + "\n\n")
-		buf.Write(data)
+		if err := toml.NewEncoder(buf).Encode(c.TargetObj); err != nil {
+			return errors.Wrapf(err, "save config to %q file", c.Filename)
+		}
 
 	case ".json": // json 不支持注释
 		data, err := json.Marshal(c.TargetObj)
 		if err != nil {
-			return errors.Wrapf(err,"save config to %q file",c.Filename)
+			return errors.Wrapf(err, "save config to %q file", c.Filename)
 		}
 		buf.Write(data)
 
@@ -118,7 +116,7 @@ func (c *configurator) Save(fileComment string) error {
 	}
 
 	if _, err := buf.WriteTo(f); err != nil {
-		return errors.Wrapf(err,"save config to %q file",c.Filename)
+		return errors.Wrapf(err, "save config to %q file", c.Filename)
 	}
 	return nil
 }
