@@ -33,6 +33,11 @@ var Dut = DutConfig{
 		ByeCommands:   []string{"exit"},
 		PromptPattern: `(?msi:[\$%#>]$)`,
 	},
+	Syslog: dutSyslogConfig{
+		Port:         514,
+		Format:       "RFC3164",
+		ProtocolType: "UDP",
+	},
 }
 
 // DutConfig 待测设备的配置
@@ -43,6 +48,14 @@ type DutConfig struct {
 	Telnet   dutTelnetConfig `json:"telnet" yaml:"telnet" toml:"telnet"`
 	Serial   dutSerialConfig `json:"serial" yaml:"serial" toml:"serial"`
 	SSH      dutSSHConfig    `json:"ssh" yaml:"ssh" toml:"ssh"`
+	Syslog   dutSyslogConfig `json:"syslog" yaml:"syslog" toml:"syslog"`
+}
+
+// dutSyslogConfig
+type dutSyslogConfig struct {
+	Port         uint16 `json:"port" yaml:"port" toml:"port"`
+	Format       string `json:"format" yaml:"format" toml:"format"`                      // syslog format (RFC3164 or RFC5424 or RFC6587)
+	ProtocolType string `json:"protocol_type" yaml:"protocol_type" toml:"protocol_type"` // UDP, TCP
 }
 
 // dutTelnetConfig 待测设备的 Telnet 接口配置
